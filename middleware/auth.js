@@ -1,24 +1,38 @@
-const jwt = require('jsonwebtoken')
-const User = require("../models/User")
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-const auth = (roles = []) = async (req, res, next) => {
-    try {
-        const token = req.cookies.token
-        if (!token) {
-            return res.status(401).json({ message: "Not Authorized, Login Again" })
-        }
-        const decoded = jwt.verify(token, process.env.SECRET_KEY)
+const isAuthenticated = async (req, res, next) => {
+    // console.log("here")
+    const token = req.cookies.token;
 
-        req.user = await User.findOne(decoded.id).select("-password")
-        if (!req.user) {
-            return res.status(401).json({ message: "User not found" });
-        }
-        if (roles.length && !roles.includes(req.user.role)) {
-            return res.status(403).json({ message: "Forbidden: Role not allowed" });
-        }
-        next()
-    } catch (error) {
-        console.log("Error in Authorizing" + error.message)
-        res.status(400).json({ message: "Error in  Authorizing" })
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: "Not authenticated"
+        });
     }
-}
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // console.log(decoded)
+        const user = await User.findById(decoded.id).select("-password");
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        req.user = user; // 🔥 VERY IMPORTANT
+
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid token"
+        });
+    }
+};
+
+export default isAuthenticated;
