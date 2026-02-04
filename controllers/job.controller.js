@@ -19,6 +19,7 @@ export const createJob = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
         const jobCode = await generateJobCode()
+        // console.log("generate code ", jobCode)
 
         const job = await Job.create({
             jobCode,
@@ -42,7 +43,6 @@ export const createJob = async (req, res) => {
 
     }
 }
-
 
 
 
