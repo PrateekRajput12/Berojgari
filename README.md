@@ -9,3 +9,8 @@
 # Day-3
 - Created -> application -> apply , getApplication(HR),updateApplicationStatus(HR)
 - Tested
+
+
+# Day-4 
+created -> schedule interview , getInterviewByApplication,submit interviewfeedback
+- not tested yet 
