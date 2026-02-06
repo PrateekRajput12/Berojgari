@@ -7,7 +7,7 @@ import authorizeRoles from '../middleware/authorizeRoles.js'
 const router = express.Router()
 
 
-router.post('/:jobId/apply', upload.single("resume"), applyForJob)
+router.post('/:jobId/apply', isAuthenticated, authorizeRoles("Candidate"), upload.single("resume"), applyForJob)
 
 
 router.get("/job/:jobId", isAuthenticated, authorizeRoles("HR", "Recruiter"), getApplicationsByJob)

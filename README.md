@@ -16,3 +16,14 @@ created -> schedule interview(HR) , getInterviewByApplication(BY HR ),submit int
     Interviewer
 )
 -  Tested yet 
+
+# Day -5 
+- Offer letter -> create("HR"),
+getAllOfferLetter with application("HR"
+),
+reject offer letter ("Candidate"),
+accept offer letter ("Candidate")
+ - tested
+
+ 
+ ### Created candidate in schema and all required places
