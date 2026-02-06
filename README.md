@@ -12,5 +12,7 @@
 
 
 # Day-4 
-created -> schedule interview , getInterviewByApplication,submit interviewfeedback
-- not tested yet 
+created -> schedule interview(HR) , getInterviewByApplication(BY HR ),submit interviewfeedback(
+    Interviewer
+)
+-  Tested yet 

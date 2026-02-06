@@ -7,7 +7,7 @@ import { getInterviewsByApplication, scheduleInterview, submitInterviewFeedback 
 
 router.post("/schedule", isAuthenticated, authorizeRoles("HR", "Recruiter"), scheduleInterview)
 router.patch("/:id/feedback", isAuthenticated, authorizeRoles("Interviewer"), submitInterviewFeedback)
-router.get("//application/:applicationId", isAuthenticated, authorizeRoles("HR", "Recruiter"), getInterviewsByApplication)
+router.get("/application/:applicationId", isAuthenticated, authorizeRoles("HR", "Recruiter"), getInterviewsByApplication)
 
 
 export default router

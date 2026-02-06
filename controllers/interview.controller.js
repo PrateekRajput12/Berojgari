@@ -1,14 +1,64 @@
 import Interview from "../models/interview.model.js";
 import Application from "../models/application.model.js";
 
+// export const scheduleInterview = async (req, res) => {
+//     try {
+//         const { applicationId, round, interviewerId, scheduledAt, mode } = req.body
+//         if (!applicationId || !round || !interviewerId || !scheduledAt || !mode) {
+//             return res.status(400).json({ message: "All fields are required" });
+//         }
+//         if (round < 1 || round > 4) {
+//             return res.status(400).json({ message: "invalid Interview round" })
+//         }
+
+//         const application = await Application.findById(applicationId);
+//         if (!application) {
+//             return res.status(404).json({ message: "Application not found" });
+//         }
+
+//         if (application.status === "Rejected") {
+//             return res.status(400).json({ message: "Candidate already rejected" });
+//         }
+
+//         // prevent skipping rounds
+//         const previousRound = await Interview.findOne({
+//             application: applicationId,
+//             round: round - 1,
+//             result: "Pass",
+//         });
+//         if (round > 1 && !previousRound) {
+//             return res.status(400).json({
+//                 message: "Previous round not cleared",
+//             });
+//         }
+//         const interview = await Interview.create({
+//             application: applicationId,
+//             round,
+//             interviewer: interviewerId,
+//             scheduledAt,
+//             mode,
+//         });
+
+//         res.status(201).json({
+//             message: "Interview scheduled",
+//             interview,
+//         });
+//     } catch (error) {
+//         console.log(error.message || "Error in scheduling interview")
+//         res.status(500).json({ message: error.message });
+
+//     }
+// }
 export const scheduleInterview = async (req, res) => {
     try {
-        const { applicationId, round, interviewerId, scheduledAt, mode } = req.body
+        const { applicationId, round, interviewerId, scheduledAt, mode } = req.body;
+
         if (!applicationId || !round || !interviewerId || !scheduledAt || !mode) {
             return res.status(400).json({ message: "All fields are required" });
         }
+
         if (round < 1 || round > 4) {
-            return res.status(400).json({ message: "invalid Interview round" })
+            return res.status(400).json({ message: "Invalid interview round" });
         }
 
         const application = await Application.findById(applicationId);
@@ -20,17 +70,31 @@ export const scheduleInterview = async (req, res) => {
             return res.status(400).json({ message: "Candidate already rejected" });
         }
 
-        // prevent skipping rounds
+        // ✅ NEW: Prevent scheduling same round twice
+        const existingInterview = await Interview.findOne({
+            application: applicationId,
+            round: round,
+        });
+
+        if (existingInterview) {
+            return res.status(400).json({
+                message: `Interview already scheduled for round ${round}`,
+            });
+        }
+
+        // Prevent skipping rounds
         const previousRound = await Interview.findOne({
             application: applicationId,
             round: round - 1,
             result: "Pass",
         });
+
         if (round > 1 && !previousRound) {
             return res.status(400).json({
                 message: "Previous round not cleared",
             });
         }
+
         const interview = await Interview.create({
             application: applicationId,
             round,
@@ -43,12 +107,13 @@ export const scheduleInterview = async (req, res) => {
             message: "Interview scheduled",
             interview,
         });
-    } catch (error) {
-        console.log(error.message || "Error in scheduling interview")
-        res.status(500).json({ message: error.message });
 
+    } catch (error) {
+        console.log(error.message || "Error in scheduling interview");
+        res.status(500).json({ message: error.message });
     }
-}
+};
+
 
 
 export const submitInterviewFeedback = async (req, res) => {
@@ -62,7 +127,7 @@ export const submitInterviewFeedback = async (req, res) => {
         if (!interview) {
             return res.status(404).json({ message: "Interview not found" });
         }
-        interview.feedback = { comments, score };
+        interview.feedback = { comment, score };
         interview.result = result;
         await interview.save();
 
