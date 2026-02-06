@@ -1,5 +1,7 @@
 import Application from "../models/application.model.js";
 import Offer from "../models/Offer.model.js";
+import User from "../models/user.model.js";
+import sendEmail from "../utils/sendEmail.js";
 
 export const createOffer = async (req, res) => {
     try {
@@ -27,6 +29,17 @@ export const createOffer = async (req, res) => {
 
         })
 
+        await sendEmail({
+            to: application.candidate.email,
+            subject: 'Offer Letter',
+            html: `
+              <p>Hi ${application.candidate.name},</p>
+    <p>We are pleased to offer you the position.</p>
+    <p><b>Salary:</b> ₹${salary}</p>
+    <p><b>Joining Date:</b> ${new Date(joiningDate).toDateString()}</p>
+    <p>Please respond before ${new Date(validTill).toDateString()}.</p>
+            `
+        })
         res.status(201).json({
             message: "Offer created successfully", offer
         })
@@ -168,6 +181,23 @@ export const rejectOffer = async (req, res) => {
         offer.status = "Rejected";
         await offer.save();
 
+        const hrUser = await User.find({ role: "HR" })
+        try {
+            for (const hr of hrUser) {
+                await sendEmail({
+                    to: hr.email,
+                    subject: "Offer Response Update",
+                    html: `
+      <p>Candidate has ${offer.status.toLowerCase()} the offer.</p>
+      <p>Application ID: ${offer.application}</p>
+    `,
+                })
+            }
+
+        } catch (error) {
+            console.log("Email failed:", err.message);
+
+        }
         res.status(200).json({
             message: "Offer rejected successfully",
         });

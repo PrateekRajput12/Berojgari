@@ -2,7 +2,7 @@ import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
 import cloudinary from "../config/cloudinary.js";
 import mongoose from "mongoose";
-
+import sendEmail from "../utils/sendEmail.js";
 // export const applyForJob = async (req, res) => {
 //     try {
 //         const { jobId } = req.params
@@ -185,7 +185,21 @@ export const applyForJob = async (req, res) => {
                         publicId: uploadResult.public_id,
                     },
                 });
+                try {
+                    await sendEmail({
+                        to: email,
+                        subject: "Application Received",
+                        html: `
+                    <p>Hi ${name},</p>
+    <p>Your application has been successfully submitted.</p>
+    <p>We will contact you if shortlisted.</p>
+    <br/>
+    <p>Regards,<br/>HR Team</p>`
+                    })
+                } catch (error) {
+                    console.log("Email failed:", err.message);
 
+                }
                 return res.status(201).json({
                     success: true,
                     message: "Application submitted successfully",

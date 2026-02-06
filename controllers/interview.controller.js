@@ -1,6 +1,7 @@
 import Interview from "../models/interview.model.js";
 import Application from "../models/application.model.js";
-
+import sendEmail from "../utils/sendEmail.js";
+import User from "../models/user.model.js";
 // export const scheduleInterview = async (req, res) => {
 //     try {
 //         const { applicationId, round, interviewerId, scheduledAt, mode } = req.body
@@ -102,6 +103,31 @@ export const scheduleInterview = async (req, res) => {
             scheduledAt,
             mode,
         });
+        const interviewer = await User.findById(interviewerId)
+        try {
+            await sendEmail({
+                to: application.candidate.email,
+                subject: `Interview Round ${round} Scheduled`,
+                html: `
+              <p>Hi ${application.candidate.name},</p>
+    <p>Your interview round ${round} has been scheduled.</p>
+    <p><b>Date:</b> ${new Date(scheduledAt).toLocaleString()}</p>
+    <p><b>Mode:</b> ${mode}</p>
+            `
+            })
+            await sendEmail({
+                to: interviewer.email,
+                subject: `Interview Assigned (Round ${round})`,
+                html: `
+    <p>You have been assigned an interview.</p>
+    <p><b>Candidate:</b> ${application.candidate.name}</p>
+    <p><b>Date:</b> ${new Date(scheduledAt).toLocaleString()}</p>
+  `,
+            });
+        } catch (error) {
+            console.log("Email failed:", err.message);
+
+        }
 
         res.status(201).json({
             message: "Interview scheduled",
@@ -140,6 +166,44 @@ export const submitInterviewFeedback = async (req, res) => {
         if (result === "Fail") {
             application.status = "Rejected";
             await application.save();
+        }
+        try {
+            if (result === "Fail") {
+                await sendEmail({
+                    to: application.candidate.email,
+                    subject: "Interview Update",
+                    html: `
+                 <p>Hi ${application.candidate.name},</p>
+      <p>Thank you for attending.</p>
+      <p>You were not selected at this stage.</p>
+                `
+                })
+            } if (result === "Pass" && interview.round < 4) {
+                await sendEmail({
+                    to: application.candidate.email,
+                    subject: "Interview Cleared",
+                    html: `
+      <p>Congratulations ${application.candidate.name}!</p>
+      <p>You cleared Round ${interview.round}.</p>
+      <p>Next round details will follow.</p>
+    `,
+                });
+            }
+
+            if (result === "Pass" && interview.round === 4) {
+                await sendEmail({
+                    to: application.candidate.email,
+                    subject: "Interview Process Completed",
+                    html: `
+      <p>Congratulations!</p>
+      <p>You have cleared all rounds.</p>
+      <p>HR will contact you with offer details.</p>
+    `,
+                });
+            }
+        } catch (error) {
+            console.log("Email failed:", err.message);
+
         }
 
         res.status(200).json({

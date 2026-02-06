@@ -25,5 +25,10 @@ reject offer letter ("Candidate"),
 accept offer letter ("Candidate")
  - tested
 
- 
+
  ### Created candidate in schema and all required places
+
+# Added Email sending 
+- apply job 
+- offer rejected or accepted
+- interview scheduled
