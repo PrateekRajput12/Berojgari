@@ -53,12 +53,18 @@ export const login = async (req, res) => {
             return res.status(400).json({ message: "Problem in creating token with jwt" })
         }
 
+        // res.cookie("token", token, {
+        //     httpOnly: true,
+        //     secure: false, // true in production (https)
+        //     sameSite: "lax",
+        // })
+
+
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false, // true in production (https)
-            sameSite: "lax",
-        })
-
+            secure: true,          // VERY IMPORTANT for production
+            sameSite: "none",      // REQUIRED for cross-origin
+        });
 
         res.status(200).json({ message: "Logged In Successfully", checkUser })
     } catch (error) {
