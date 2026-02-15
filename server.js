@@ -11,7 +11,7 @@ import OfferRouter from './routes/offer.router.js'
 dotenv.config()
 const app = express()
 connectDB()
-app.options("*", cors());
+
 
 app.use(cors({
     origin: ["http://localhost:5173", "https://berojgari.vercel.app"],
