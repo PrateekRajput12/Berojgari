@@ -103,7 +103,7 @@ export const acceptOffer = async (req, res) => {
         }
 
         // Only Pending can be accepted
-        if (offer.status !== "Pending") {
+        if (offer.status !== "Sent") {
             return res.status(400).json({
                 message: "Invalid offer status",
             });
@@ -172,7 +172,7 @@ export const rejectOffer = async (req, res) => {
         }
 
         // Only Pending can be rejected
-        if (offer.status !== "Pending") {
+        if (offer.status !== "Sent") {
             return res.status(400).json({
                 message: "Invalid offer status",
             });
@@ -224,3 +224,34 @@ export const getAllOffers = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+
+export const getMyOffers = async (req, res) => {
+    try {
+        const userId = req.user.id; // from auth middleware
+
+        const offers = await Offer.find()
+            .populate({
+                path: "application",
+                match: { candidate: userId }, // only this candidate
+                populate: {
+                    path: "job",
+                    select: "title location salary"
+                }
+            })
+            .sort({ createdAt: -1 });
+
+        // Remove offers where application didn't match
+        const filteredOffers = offers.filter(
+            (offer) => offer.application !== null
+        );
+
+        res.status(200).json({
+            message: "My offers fetched successfully",
+            offers: filteredOffers,
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

@@ -12,7 +12,7 @@ dotenv.config()
 const app = express()
 connectDB()
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "https://berojgari.vercel.app/"],
     credentials: true
 }
 

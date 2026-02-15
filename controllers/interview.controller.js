@@ -142,79 +142,156 @@ export const scheduleInterview = async (req, res) => {
 
 
 
+// export const submitInterviewFeedback = async (req, res) => {
+//     try {
+//         const { comment, score, result } = req.body
+
+//         const interview = await Interview.findById(req.params.id);
+//         if (!interview) {
+//             return res.status(404).json({ message: "Interview not found" });
+//         }
+//         if (!interview) {
+//             return res.status(404).json({ message: "Interview not found" });
+//         }
+//         interview.feedback = { comment, score };
+//         interview.result = result;
+//         await interview.save();
+
+//         const application = await Application.findById(interview.application);
+//         if (result === "Fail") {
+//             application.status = "Rejected";
+//             await application.save();
+//         }
+
+//         if (result === "Fail") {
+//             application.status = "Rejected";
+//             await application.save();
+//         }
+//         try {
+//             if (result === "Fail") {
+//                 await sendEmail({
+//                     to: application.candidate.email,
+//                     subject: "Interview Update",
+//                     html: `
+//                  <p>Hi ${application.candidate.name},</p>
+//       <p>Thank you for attending.</p>
+//       <p>You were not selected at this stage.</p>
+//                 `
+//                 })
+//             } if (result === "Pass" && interview.round < 4) {
+//                 await sendEmail({
+//                     to: application.candidate.email,
+//                     subject: "Interview Cleared",
+//                     html: `
+//       <p>Congratulations ${application.candidate.name}!</p>
+//       <p>You cleared Round ${interview.round}.</p>
+//       <p>Next round details will follow.</p>
+//     `,
+//                 });
+//             }
+
+//             if (result === "Pass" && interview.round === 4) {
+//                 await sendEmail({
+//                     to: application.candidate.email,
+//                     subject: "Interview Process Completed",
+//                     html: `
+//       <p>Congratulations!</p>
+//       <p>You have cleared all rounds.</p>
+//       <p>HR will contact you with offer details.</p>
+//     `,
+//                 });
+//             }
+//         } catch (error) {
+//             console.log("Email failed:", err.message);
+
+//         }
+
+//         res.status(200).json({
+//             message: "Feedback submitted",
+//             interview,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// }
 export const submitInterviewFeedback = async (req, res) => {
     try {
-        const { comment, score, result } = req.body
+        const { comment, score, result } = req.body;
 
         const interview = await Interview.findById(req.params.id);
+
         if (!interview) {
             return res.status(404).json({ message: "Interview not found" });
         }
-        if (!interview) {
-            return res.status(404).json({ message: "Interview not found" });
-        }
+
+        // Save feedback
         interview.feedback = { comment, score };
         interview.result = result;
         await interview.save();
 
-        const application = await Application.findById(interview.application);
+        // Get application with candidate populated
+        const application = await Application.findById(interview.application)
+            .populate("candidate");
+
+        if (!application) {
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        // If candidate failed
         if (result === "Fail") {
             application.status = "Rejected";
             await application.save();
+
+            await sendEmail({
+                to: application.candidate.email,
+                subject: "Interview Update",
+                html: `
+          <p>Hi ${application.candidate.name},</p>
+          <p>Thank you for attending the interview.</p>
+          <p>You were not selected at this stage.</p>
+        `,
+            });
         }
 
-        if (result === "Fail") {
-            application.status = "Rejected";
+        // If candidate passed but not final round
+        if (result === "Pass" && interview.round < 4) {
+            await sendEmail({
+                to: application.candidate.email,
+                subject: "Interview Cleared",
+                html: `
+          <p>Congratulations ${application.candidate.name}!</p>
+          <p>You cleared Round ${interview.round}.</p>
+          <p>Next round details will follow soon.</p>
+        `,
+            });
+        }
+
+        // If final round cleared
+        if (result === "Pass" && interview.round === 4) {
+            application.status = "Selected";
             await application.save();
-        }
-        try {
-            if (result === "Fail") {
-                await sendEmail({
-                    to: application.candidate.email,
-                    subject: "Interview Update",
-                    html: `
-                 <p>Hi ${application.candidate.name},</p>
-      <p>Thank you for attending.</p>
-      <p>You were not selected at this stage.</p>
-                `
-                })
-            } if (result === "Pass" && interview.round < 4) {
-                await sendEmail({
-                    to: application.candidate.email,
-                    subject: "Interview Cleared",
-                    html: `
-      <p>Congratulations ${application.candidate.name}!</p>
-      <p>You cleared Round ${interview.round}.</p>
-      <p>Next round details will follow.</p>
-    `,
-                });
-            }
 
-            if (result === "Pass" && interview.round === 4) {
-                await sendEmail({
-                    to: application.candidate.email,
-                    subject: "Interview Process Completed",
-                    html: `
-      <p>Congratulations!</p>
-      <p>You have cleared all rounds.</p>
-      <p>HR will contact you with offer details.</p>
-    `,
-                });
-            }
-        } catch (error) {
-            console.log("Email failed:", err.message);
-
+            await sendEmail({
+                to: application.candidate.email,
+                subject: "Interview Process Completed",
+                html: `
+          <p>Congratulations ${application.candidate.name}!</p>
+          <p>You have cleared all rounds.</p>
+          <p>HR will contact you with offer details soon.</p>
+        `,
+            });
         }
 
         res.status(200).json({
-            message: "Feedback submitted",
+            message: "Feedback submitted successfully",
             interview,
         });
+
     } catch (error) {
+        console.log("Submit Feedback Error:", error.message);
         res.status(500).json({ message: error.message });
     }
-}
-
+};
 
 export const getInterviewsByApplication = async (req, res) => {
     try {
@@ -230,3 +307,18 @@ export const getInterviewsByApplication = async (req, res) => {
 
     }
 }
+
+export const getMyInterviews = async (req, res) => {
+    const interviews = await Interview.find({
+        interviewer: req.user._id,
+    })
+        .populate({
+            path: "application",
+            populate: {
+                path: "candidate",
+                select: "name email",
+            },
+        });
+
+    res.json({ interviews });
+};
