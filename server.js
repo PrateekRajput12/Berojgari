@@ -8,6 +8,7 @@ import JobRouter from './routes/job.routes.js'
 import ApplicationRouter from './routes/application.router.js'
 import InterviewRouter from './routes/interview.router.js'
 import OfferRouter from './routes/offer.router.js'
+import UserRouter from './routes/user.router.js'
 dotenv.config()
 const app = express()
 connectDB()
@@ -32,6 +33,7 @@ app.use("/job", JobRouter)
 app.use("/applications", ApplicationRouter)
 app.use("/interviews", InterviewRouter)
 app.use("/offers", OfferRouter)
+app.use("/users", UserRouter)
 app.listen(process.env.PORT, () => {
     console.log("Running on port " + process.env.PORT)
 })

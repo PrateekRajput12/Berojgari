@@ -1,14 +1,20 @@
-import { createJob, getAllJob, getJobById, closeJob, updateJob } from "../controllers/job.controller.js";
-import express from 'express'
-import authorizeRoles from "../middleware/authorizeRoles.js";
+import express from "express";
 import isAuthenticated from "../middleware/isAuthenticated.js";
-const router = express.Router()
+import authorizeRoles from "../middleware/authorizeRoles.js";
+import { createJob, getAllJob, getJobById, closeJob, updateJob } from "../controllers/job.controller.js";
 
-router.post('/create', isAuthenticated, authorizeRoles('HR'), createJob)
-router.get("/all", getAllJob)
-router.get("/:id", getJobById)
-router.put("/update/:id", isAuthenticated, authorizeRoles("HR"), updateJob)
-router.patch("/:id/close", isAuthenticated, authorizeRoles('HR'), closeJob)
+const router = express.Router();
 
+router.post("/create", isAuthenticated, authorizeRoles("HR"), createJob);
 
-export default router
+// public
+router.get("/all", getAllJob);
+
+// HR update/close
+router.put("/update/:id", isAuthenticated, authorizeRoles("HR"), updateJob);
+router.patch("/:id/close", isAuthenticated, authorizeRoles("HR"), closeJob);
+
+// public
+router.get("/:id", getJobById);
+
+export default router;
